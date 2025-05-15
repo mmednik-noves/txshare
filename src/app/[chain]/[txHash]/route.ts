@@ -1,29 +1,26 @@
 // @jsxImportSource react
 import * as React from 'react';
 import { ImageResponse } from '@vercel/og';
-import type { NextRequest } from 'next/server';
+import { NextRequest } from 'next/server';
 import { Translate } from '@noves/noves-sdk';
 
 export const runtime = 'edge';
 
-type RouteContext = {
-  params: {
-    chain: string;
-    txHash: string;
-  };
+type RouteParams = {
+  chain: string;
+  txHash: string;
 };
 
 export async function GET(
   request: NextRequest,
-  context: RouteContext
-) {
-  const params = await context.params;
-  const { chain, txHash } = params;
+  context: { params: Promise<RouteParams> }
+): Promise<ImageResponse> {
+  const { chain, txHash } = await context.params;
 
   let description = 'No description available';
   if (txHash && chain) {
     try {
-      const evmTranslate = Translate.evm(process.env.NEXT_PUBLIC_NOVES_API_KEY!);
+      const evmTranslate = Translate.evm(process.env.NOVES_API_KEY!);
       const txDesc = await evmTranslate.describeTransaction(chain, txHash);
       description = txDesc?.description || description;
     } catch {
