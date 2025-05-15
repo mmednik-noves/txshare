@@ -6,9 +6,16 @@ import { Translate } from '@noves/noves-sdk';
 
 export const runtime = 'edge';
 
+type RouteContext = {
+  params: {
+    chain: string;
+    txHash: string;
+  };
+};
+
 export async function GET(
-  req: NextRequest,
-  context: { params: { chain: string; txHash: string } }
+  request: NextRequest,
+  context: RouteContext
 ) {
   const params = await context.params;
   const { chain, txHash } = params;

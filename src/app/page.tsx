@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useState, useEffect } from 'react';
-import { Translate } from '@noves/noves-sdk';
 
 export default function Home() {
   const [chainId, setChainId] = useState('');
@@ -13,8 +12,8 @@ export default function Home() {
   useEffect(() => {
     const fetchChains = async () => {
       try {
-        const evmTranslate = Translate.evm(process.env.NEXT_PUBLIC_NOVES_API_KEY!);
-        const result = await evmTranslate.getChains();
+        const response = await fetch('/api/chains');
+        const result = await response.json();
         setChains(result);
       } catch {
         setChains([

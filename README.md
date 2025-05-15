@@ -21,7 +21,7 @@ npm install
 
 3. Add your Noves API key to `.env.local`:
 ```
-NEXT_PUBLIC_NOVES_API_KEY=your_api_key_here
+NOVES_API_KEY=your_api_key_here
 ```
 
 4. Run the development server:
