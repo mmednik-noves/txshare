@@ -2,10 +2,10 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 
 type Props = {
-  params: {
+  params: Promise<{
     chain: string;
     txHash: string;
-  };
+  }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
