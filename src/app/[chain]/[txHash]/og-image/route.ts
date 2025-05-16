@@ -4,7 +4,9 @@ import { ImageResponse } from '@vercel/og';
 import { NextRequest } from 'next/server';
 import { Translate, shortenAddress } from '@noves/noves-sdk';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 type RouteParams = {
   chain: string;
