@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   },
   // Configure image domains if you're using next/image
   images: {
-    domains: ['noves.fi'], // Add any domains you need for images
+    domains: ['noves.fi', 'raw.githubusercontent.com'], // Add any domains you need for images
   }
 };
 

@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@noves/noves-sdk": "^1.0.16",
+    "@noves/noves-sdk": "^1.0.18",
     "@vercel/og": "^0.6.8",
     "next": "15.3.2",
     "react": "^19.0.0",
