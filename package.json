@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.3",
     "@noves/noves-sdk": "^1.0.18",
     "@vercel/og": "^0.5.1",
     "next": "15.3.2",

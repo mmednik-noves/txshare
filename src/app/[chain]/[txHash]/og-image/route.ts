@@ -244,6 +244,10 @@ export async function GET(
     {
       width: 1200,
       height: 675,
+      headers: {
+        'Content-Type': 'image/webp',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      },
     }
   );
 } 
