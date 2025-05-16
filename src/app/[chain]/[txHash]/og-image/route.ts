@@ -60,14 +60,7 @@ export async function GET(
         style: {
           display: 'flex',
           alignItems: 'center',
-          gap: '40px',
-          marginTop: '40px',
-          background: 'rgba(255, 255, 255, 0.1)',
-          padding: '40px',
-          borderRadius: '24px',
-          backdropFilter: 'blur(10px)',
-          width: '100%',
-          justifyContent: 'center',
+          gap: '20px',
         },
       },
       [
@@ -79,15 +72,15 @@ export async function GET(
               display: 'flex',
               flexDirection: 'column',
               background: 'rgba(255, 255, 255, 0.15)',
-              padding: '24px 40px',
-              borderRadius: '16px',
+              padding: '16px 24px',
+              borderRadius: '12px',
               border: '2px solid rgba(255, 255, 255, 0.2)',
-              minWidth: '300px',
+              minWidth: '200px',
             },
           },
           [
-            React.createElement('p', { style: { color: 'white', fontSize: 20, margin: 0 } }, 'From'),
-            React.createElement('p', { style: { color: 'white', fontSize: 28, margin: '8px 0 0 0', fontWeight: '500' } }, fromAddress),
+            React.createElement('p', { style: { color: 'white', fontSize: 16, margin: 0 } }, 'From'),
+            React.createElement('p', { style: { color: 'white', fontSize: 20, margin: '4px 0 0 0', fontWeight: '500' } }, fromAddress),
           ]
         ),
         // Arrow
@@ -97,8 +90,8 @@ export async function GET(
             style: {
               display: 'flex',
               alignItems: 'center',
-              color: '#4CAF50',
-              fontSize: 48,
+              color: 'white',
+              fontSize: 32,
               fontWeight: 'bold',
             },
           },
@@ -112,15 +105,15 @@ export async function GET(
               display: 'flex',
               flexDirection: 'column',
               background: 'rgba(255, 255, 255, 0.15)',
-              padding: '24px 40px',
-              borderRadius: '16px',
+              padding: '16px 24px',
+              borderRadius: '12px',
               border: '2px solid rgba(255, 255, 255, 0.2)',
-              minWidth: '300px',
+              minWidth: '200px',
             },
           },
           [
-            React.createElement('p', { style: { color: 'white', fontSize: 20, margin: 0 } }, 'To'),
-            React.createElement('p', { style: { color: 'white', fontSize: 28, margin: '8px 0 0 0', fontWeight: '500' } }, toAddress),
+            React.createElement('p', { style: { color: 'white', fontSize: 16, margin: 0 } }, 'To'),
+            React.createElement('p', { style: { color: 'white', fontSize: 20, margin: '4px 0 0 0', fontWeight: '500' } }, toAddress),
           ]
         ),
       ]
@@ -164,7 +157,7 @@ export async function GET(
           backgroundImage: `url(${encodedBgImage})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          padding: '40px',
+          padding: '20px 40px 40px 40px',
         },
       },
       [
@@ -173,30 +166,10 @@ export async function GET(
           {
             style: {
               display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              gap: '20px',
-              height: '100%',
-              justifyContent: 'flex-start',
-            },
-          },
-          [
-            React.createElement('h1', { style: { color: 'white', fontSize: 48, fontWeight: 900, fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' } }, transactionType),
-            React.createElement('p', { style: { color: 'white', fontSize: 32 } }, description),
-            React.createElement(FlowVisualization),
-          ]
-        ),
-        React.createElement(
-          'div',
-          {
-            style: {
-              display: 'flex',
               flexDirection: 'row',
               alignItems: 'center',
               gap: '10px',
-              position: 'absolute',
-              bottom: '15px',
-              left: '40px',
+              marginBottom: '40px',
             },
           },
           [
@@ -213,9 +186,57 @@ export async function GET(
                 color: 'black', 
                 fontSize: 36, 
                 fontWeight: 'bold',
-                marginLeft: '16px'
+                marginLeft: '16px',
+                fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
               } 
             }, capitalizedChain),
+          ]
+        ),
+        React.createElement(
+          'div',
+          {
+            style: {
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '8px',
+              height: '100%',
+              justifyContent: 'flex-start',
+            },
+          },
+          [
+            React.createElement('h1', { 
+              style: { 
+                color: 'white', 
+                fontSize: 52, 
+                fontWeight: 700, 
+                fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                letterSpacing: '-0.03em',
+                margin: 0
+              } 
+            }, transactionType),
+            React.createElement(
+              'div',
+              {
+                style: {
+                  display: 'flex',
+                  maxWidth: '80%',
+                  marginTop: '0'
+                }
+              },
+              React.createElement('p', { 
+                style: { 
+                  color: 'white', 
+                  fontSize: 40,
+                  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  fontWeight: 400,
+                  letterSpacing: '-0.01em',
+                  marginBottom: '20px',
+                  lineHeight: 1.4
+                } 
+              }, description)
+            ),
+            React.createElement(FlowVisualization),
           ]
         ),
       ]
