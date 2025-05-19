@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
+import Link from 'next/link';
 
 type Props = {
   params: Promise<{
@@ -47,7 +48,7 @@ export default async function TransactionPage({ params }: Props) {
   const ogImageUrl = `${baseUrl}/${chain}/${txHash}/og-image`;
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-8">
       <Image
         src={ogImageUrl}
         alt="Transaction Preview"
@@ -56,6 +57,12 @@ export default async function TransactionPage({ params }: Props) {
         priority
         className="max-w-full h-auto"
       />
+      <Link 
+        href="/"
+        className="text-white hover:text-blue-400 transition-colors duration-200 text-lg font-medium flex items-center gap-2"
+      >
+        ✨ Generate your own transaction preview
+      </Link>
     </div>
   );
 } 

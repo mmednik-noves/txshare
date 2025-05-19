@@ -17,35 +17,34 @@ export const generateDefaultIcon = (chainName: string): string => {
     .slice(0, 2)
     .join('');
     
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-      <circle cx="50" cy="50" r="50" fill="${color}"/>
-      <text
-        x="50"
-        y="50"
-        dy="0.35em"
-        fill="white"
-        font-family="Arial, sans-serif"
-        font-size="40"
-        text-anchor="middle"
-      >${initials}</text>
-    </svg>
-  `;
+  const svg = `<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="50" fill="${color}"/>
+    <text x="50" y="50" font-family="Arial" font-size="40" fill="white" text-anchor="middle" dominant-baseline="central">${initials}</text>
+  </svg>`;
   
-  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+  return `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
 };
 
 export const getChainIconUrl = (chainName: string) => {
   return `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${chainName.toLowerCase()}/info/logo.png`;
 };
 
-// Server-side helper for checking if a chain icon exists
-export const checkChainIconExists = async (chainName: string): Promise<string> => {
+export const getChainInitialsAndColor = (chainName: string) => {
+  const color = generateColorFromString(chainName);
+  const initials = chainName
+    .split(/\s+/)
+    .map(word => word.charAt(0).toUpperCase())
+    .slice(0, 2)
+    .join('');
+  return { initials, color };
+};
+
+export const checkChainIconExists = async (chainName: string): Promise<string | null> => {
   try {
     const url = getChainIconUrl(chainName);
     const res = await fetch(url, { method: 'HEAD' });
-    return res.ok ? url : generateDefaultIcon(chainName);
+    return res.ok ? url : null;
   } catch {
-    return generateDefaultIcon(chainName);
+    return null;
   }
 }; 

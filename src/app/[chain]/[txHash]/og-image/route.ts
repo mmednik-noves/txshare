@@ -3,7 +3,7 @@ import * as React from 'react';
 import { ImageResponse } from '@vercel/og';
 import { NextRequest } from 'next/server';
 import { Translate, shortenAddress } from '@noves/noves-sdk';
-import { checkChainIconExists } from '../../../utils/chainIcons';
+import { checkChainIconExists, getChainInitialsAndColor } from '../../../utils/chainIcons';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -72,16 +72,16 @@ export async function GET(
             style: {
               display: 'flex',
               flexDirection: 'column',
-              background: 'rgba(255, 255, 255, 0.15)',
-              padding: '16px 24px',
-              borderRadius: '12px',
-              border: '2px solid rgba(255, 255, 255, 0.2)',
-              minWidth: '200px',
+              background: '#fff',
+              padding: '20px 30px',
+              borderRadius: '0',
+              border: '3px solid #000',
+              minWidth: '250px',
             },
           },
           [
-            React.createElement('p', { style: { color: 'white', fontSize: 16, margin: 0 } }, 'From'),
-            React.createElement('p', { style: { color: 'white', fontSize: 20, margin: '4px 0 0 0', fontWeight: '500' } }, fromAddress),
+            React.createElement('p', { style: { color: 'black', fontSize: 20, margin: 0 } }, 'From'),
+            React.createElement('p', { style: { color: 'black', fontSize: 25, margin: '5px 0 0 0', fontWeight: '500' } }, fromAddress),
           ]
         ),
         // Arrow
@@ -91,7 +91,7 @@ export async function GET(
             style: {
               display: 'flex',
               alignItems: 'center',
-              color: 'white',
+              color: 'black',
               fontSize: 32,
               fontWeight: 'bold',
             },
@@ -105,16 +105,16 @@ export async function GET(
             style: {
               display: 'flex',
               flexDirection: 'column',
-              background: 'rgba(255, 255, 255, 0.15)',
-              padding: '16px 24px',
-              borderRadius: '12px',
-              border: '2px solid rgba(255, 255, 255, 0.2)',
-              minWidth: '200px',
+              background: '#fff',
+              padding: '20px 30px',
+              borderRadius: '0',
+              border: '3px solid #000',
+              minWidth: '250px',
             },
           },
           [
-            React.createElement('p', { style: { color: 'white', fontSize: 16, margin: 0 } }, 'To'),
-            React.createElement('p', { style: { color: 'white', fontSize: 20, margin: '4px 0 0 0', fontWeight: '500' } }, toAddress),
+            React.createElement('p', { style: { color: 'black', fontSize: 20, margin: 0 } }, 'To'),
+            React.createElement('p', { style: { color: 'black', fontSize: 25, margin: '5px 0 0 0', fontWeight: '500' } }, toAddress),
           ]
         ),
       ]
@@ -130,9 +130,10 @@ export async function GET(
 
   // Fetch chain icon
   const chainIcon = await checkChainIconExists(chain);
+  const { initials, color } = getChainInitialsAndColor(chain);
 
-  // Capitalize first letter of chain name
-  const capitalizedChain = chain.charAt(0).toUpperCase() + chain.slice(1).toLowerCase();
+  // Capitalize first letter of chain name, but use 'Ethereum' for 'eth'
+  const capitalizedChain = chain === 'eth' ? 'Ethereum' : chain.charAt(0).toUpperCase() + chain.slice(1).toLowerCase();
 
   return new ImageResponse(
     React.createElement(
@@ -164,23 +165,51 @@ export async function GET(
             },
           },
           [
-            React.createElement('img', {
-              src: chainIcon,
-              width: 100,
-              height: 100,
-              style: { 
-                objectFit: 'contain',
-                borderRadius: '50%',
-              },
-            }),
-            React.createElement('p', { 
-              style: { 
-                color: 'black', 
-                fontSize: 36, 
+            chainIcon
+              ? React.createElement('img', {
+                  src: chainIcon,
+                  width: 100,
+                  height: 100,
+                  style: {
+                    objectFit: 'contain',
+                    borderRadius: '50%',
+                  },
+                })
+              : React.createElement(
+                  'div',
+                  {
+                    style: {
+                      width: 100,
+                      height: 100,
+                      borderRadius: '50%',
+                      background: color,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    },
+                  },
+                  React.createElement(
+                    'span',
+                    {
+                      style: {
+                        color: 'white',
+                        fontSize: 48,
+                        fontWeight: 'bold',
+                        fontFamily: 'Arial, sans-serif',
+                      },
+                    },
+                    initials
+                  )
+                ),
+            React.createElement('p', {
+              style: {
+                color: 'black',
+                fontSize: 36,
                 fontWeight: 'bold',
                 marginLeft: '16px',
-                fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-              } 
+                fontFamily:
+                  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              },
             }, capitalizedChain),
           ]
         ),
@@ -199,8 +228,8 @@ export async function GET(
           [
             React.createElement('h1', { 
               style: { 
-                color: 'white', 
-                fontSize: 52, 
+                color: 'black', 
+                fontSize: 70, 
                 fontWeight: 700, 
                 fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                 letterSpacing: '-0.03em',
@@ -218,8 +247,8 @@ export async function GET(
               },
               React.createElement('p', { 
                 style: { 
-                  color: 'white', 
-                  fontSize: 40,
+                  color: 'black', 
+                  fontSize: 50,
                   fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
                   fontWeight: 400,
                   letterSpacing: '-0.01em',

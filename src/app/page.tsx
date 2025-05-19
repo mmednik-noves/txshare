@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect } from 'react';
 import { Combobox } from '@headlessui/react';
-import { getChainIconUrl, generateDefaultIcon } from './utils/chainIcons';
+import { generateDefaultIcon } from './utils/chainIcons';
 
 // Add search and chevron icons using inline SVGs
 const SearchIcon = () => (
@@ -13,57 +13,109 @@ const SearchIcon = () => (
 );
 
 const ChevronIcon = ({ open }: { open: boolean }) => (
-  <svg 
-    className={`w-5 h-5 text-white/50 transition-transform ${open ? 'transform rotate-180' : ''}`} 
-    fill="none" 
-    stroke="currentColor" 
+  <svg
+    className={`w-5 h-5 text-white/50 transition-transform ${open ? 'transform rotate-180' : ''}`}
+    fill="none"
+    stroke="currentColor"
     viewBox="0 0 24 24"
   >
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
   </svg>
 );
 
+// Add chain priority order
+const chainPriorityOrder = [
+  'eth',           // ethereum
+  'bsc',           // bsc
+  'base',          // base
+  'arbitrum',      // arbitrum-one
+  'avalanche',     // avalanche
+  'polygon',       // polygon
+  'sonic',         // sonic
+  'unichain',      // unichain
+  'core',          // core
+  'cronos',        // cronos
+  'taiko-katla',   // taiko
+];
+
+// Add chain name mapping
+const chainNameMapping: { [key: string]: string } = {
+  'eth': 'ethereum',
+  'bsc': 'bsc',
+  'base': 'base',
+  'arbitrum': 'arbitrum',
+  'avalanche': 'avalanche',
+  'polygon': 'polygon',
+  'sonic': 'sonic',
+  'unichain': 'unichain',
+  'core': 'core',
+  'cronos': 'cronos',
+  'taiko-katla': 'taiko'
+};
+
+// Add chain icon mapping
+const chainIconMapping: { [key: string]: string } = {
+  'eth': 'ethereum',
+  'bsc': 'bsc',
+  'base': 'base',
+  'arbitrum': 'arbitrum',
+  'avalanche': 'avalanche',
+  'polygon': 'polygon',
+  'sonic': 'sonic',
+  'unichain': 'unichain',
+  'core': 'core',
+  'cronos': 'cronos',
+  'taiko-katla': 'taiko'
+};
+
 export default function Home() {
-  const [chainId, setChainId] = useState('');
+  const [chainId, setChainId] = useState('eth');
   const [txHash, setTxHash] = useState('');
   const [ogUrl, setOgUrl] = useState('');
   const [chains, setChains] = useState<{ name: string; ecosystem: string; icon: string }[]>([]);
   const [query, setQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
+
   useEffect(() => {
     const fetchChainsAndIcons = async () => {
       try {
         setIsLoading(true);
         const response = await fetch('/api/chains');
         const result = await response.json();
-        
-        // Fetch icons for all chains in parallel
-        const chainsWithIcons = await Promise.all(
-          result.map(async (chain: { name: string; ecosystem: string }) => {
-            try {
-              const url = getChainIconUrl(chain.name);
-              const res = await fetch(url, { method: 'HEAD' });
-              return {
-                ...chain,
-                icon: res.ok ? url : generateDefaultIcon(chain.name)
-              };
-            } catch {
-              return {
-                ...chain,
-                icon: generateDefaultIcon(chain.name)
-              };
-            }
-          })
-        );
-        
+
+        // Sort chains based on priority
+        const sortedChains = [...result].sort((a, b) => {
+          const aIndex = chainPriorityOrder.indexOf(a.name);
+          const bIndex = chainPriorityOrder.indexOf(b.name);
+          
+          // If both chains are in priority list, sort by their position
+          if (aIndex !== -1 && bIndex !== -1) {
+            return aIndex - bIndex;
+          }
+          // If only one chain is in priority list, it comes first
+          if (aIndex !== -1) return -1;
+          if (bIndex !== -1) return 1;
+          // If neither chain is in priority list, sort alphabetically
+          return a.name.localeCompare(b.name);
+        });
+
+        // Set initial chains with direct llamao.fi URLs
+        const chainsWithIcons = sortedChains.map(chain => {
+          const iconName = chainIconMapping[chain.name] || chain.name;
+          return {
+            ...chain,
+            icon: `https://icons.llamao.fi/icons/chains/rsz_${iconName}.jpg`
+          };
+        });
+
         setChains(chainsWithIcons);
       } catch {
         // Fallback with default chain and preloaded icon
         const ethereum = {
-          name: 'ethereum',
+          name: 'eth',
           ecosystem: 'evm',
-          icon: generateDefaultIcon('ethereum')
+          icon: 'https://icons.llamao.fi/icons/chains/rsz_ethereum.jpg'
         };
         setChains([ethereum]);
       } finally {
@@ -76,8 +128,12 @@ export default function Home() {
 
   const handleGenerate = () => {
     if (!chainId || !txHash) return;
-    const url = `/${chainId}/${txHash}/og-image`;
-    setOgUrl(url);
+    setIsImageLoaded(false);
+    setOgUrl('');
+    setTimeout(() => {
+      const url = `/${chainId}/${txHash}/og-image`;
+      setOgUrl(url);
+    }, 0);
   };
 
   const handleShare = () => {
@@ -90,34 +146,38 @@ export default function Home() {
     query === ''
       ? chains
       : chains.filter(chain =>
-          chain.name.toLowerCase().includes(query.toLowerCase())
-        );
+        (chainNameMapping[chain.name] || chain.name).toLowerCase().includes(query.toLowerCase())
+      );
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 -z-10">
-        <Image
-          src="/home-bg.png"
-          alt="Background"
-          fill
-          style={{ objectFit: 'cover' }}
-          priority
-        />
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+    <div className="relative min-h-screen w-full flex flex-col items-center justify-center overflow-hidden bg-[#FDF6F0]">
+      {/* Background Accents */}
+      <div className="absolute inset-0 pointer-events-none">
+        <svg className="absolute top-0 left-8 float-y float-delay-1 z-0" width="160" height="120" viewBox="0 0 160 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 90 Q 50 30, 80 85 T 150 55" stroke="#FFD600" strokeWidth="5" fill="none" strokeLinecap="round"/>
+        </svg>
+        <svg className="absolute bottom-0 right-1/3 float-x float-delay-2 z-0" width="180" height="120" viewBox="0 0 180 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 100 Q 60 40, 90 105 T 170 70" stroke="#FB7185" strokeWidth="5" fill="none" strokeLinecap="round"/>
+        </svg>
+        <svg className="absolute top-32 right-32 rotate-slow float-delay-3 z-0" width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="10" width="60" height="60" rx="12" stroke="#4ADE80" strokeWidth="5" fill="none"/>
+        </svg>
+        <svg className="absolute top-1/2 left-24 float-y float-delay-4 z-0" width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="48,12 84,84 12,84" stroke="#38BDF8" strokeWidth="5" fill="none"/>
+        </svg>
+        <svg className="absolute top-1/2 left-3/4 float-x float-delay-5 z-0" width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="100" cy="100" r="90" stroke="#FBBF24" strokeWidth="5" fill="none"/>
+        </svg>
       </div>
+      <Image src="/logo.png" alt="Logo" width={150} height={150} className="z-10" />
       {/* Main Card */}
-      <main className="flex flex-col gap-8 items-center justify-center w-full min-h-[60vh]">
-        <div className={`bg-white/10 border border-white/15 backdrop-blur-4xl rounded-2xl p-10 w-full ${ogUrl ? 'max-w-6xl' : 'max-w-xl'} flex flex-col lg:flex-row gap-8 items-center transition-all duration-300`}>
+      <main className="flex flex-col gap-8 items-center justify-center w-full min-h-[60vh] font-sans z-10">
+        <div className={`bg-white border-2 border-black p-10 w-full ${ogUrl ? 'max-w-6xl' : 'max-w-xl'} flex flex-col lg:flex-row gap-8 items-center transition-all duration-300 min-h-[600px]`}>
           {/* Form Section */}
-          <div className={`w-full ${ogUrl ? 'lg:w-1/2 pr-8 lg:border-r lg:border-white/15' : ''} flex flex-col gap-8`}>
-            {/* Logo inside card */}
-            <div className="flex items-center gap-3 mb-2">
-              <Image src="/logo.png" alt="Logo" width={48} height={48} className="rounded-xl shadow-lg" />
-            </div>
+          <div className={`w-full ${ogUrl ? 'lg:w-1/2' : ''} flex flex-col gap-8`}>
             <label className="block w-full">
-              <span className="text-white/80 font-medium">Chain:</span>
-              <Combobox value={chainId} onChange={val => setChainId(val === 'eth' ? 'ethereum' : val ?? '')}>
+              <span className="text-gray-900 font-bold text-lg">Chain:</span>
+              <Combobox value={chainId} onChange={val => setChainId(val ?? '')}>
                 {({ open }) => (
                   <div className="relative mt-2">
                     <div className="relative w-full">
@@ -127,30 +187,34 @@ export default function Home() {
                       {chainId && (
                         <div className="absolute inset-y-0 left-0 pl-8 flex items-center pointer-events-none z-10">
                           <div className="w-5 h-5 rounded-full overflow-hidden">
-                            {chains.find(c => c.name === chainId)?.icon && (
-                              <Image
-                                src={chains.find(c => c.name === chainId)!.icon}
-                                alt={chainId}
-                                width={20}
-                                height={20}
-                                className="rounded-full"
-                              />
-                            )}
+                            <img
+                              src={chains.find(c => c.name === chainId)?.icon || `https://icons.llamao.fi/icons/chains/rsz_${chainIconMapping[chainId] || chainId}.jpg`}
+                              alt={chainId}
+                              width={20}
+                              height={20}
+                              className="rounded-full"
+                              onError={(e) => {
+                                e.currentTarget.src = generateDefaultIcon(chainId);
+                              }}
+                            />
                           </div>
-                          <span className="ml-2 text-white/90">{chainId === 'eth' ? 'ethereum' : chainId}</span>
+                          <span className="ml-2 text-gray-900">{chainNameMapping[chainId] || chainId}</span>
                         </div>
                       )}
-                      <Combobox.Input
-                        className={`block w-full rounded-lg border-none bg-white/30 text-white/90 shadow-sm backdrop-blur ${chainId ? 'pl-32' : 'pl-8'} pr-10 py-3 focus:ring-2 focus:ring-green-400 placeholder:text-white/50`}
-                        displayValue={() => ''}
-                        onChange={e => setQuery(e.target.value)}
-                        placeholder={chainId ? '' : 'Search or select chain...'}
-                      />
-                      <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-                        <ChevronIcon open={open} />
+                      <Combobox.Button className="w-full">
+                        <Combobox.Input
+                          className={`block w-full border-2 border-black bg-white text-gray-900 shadow-none pl-8 pr-10 py-3 focus:ring-2 focus:ring-green-400 placeholder:text-gray-400 rounded-none cursor-pointer`}
+                          displayValue={() => ''}
+                          onChange={e => setQuery(e.target.value)}
+                          placeholder={chainId ? '' : 'Search or select chain...'}
+                          onClick={() => setQuery('')}
+                        />
                       </Combobox.Button>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                        <ChevronIcon open={open} />
+                      </div>
                     </div>
-                    <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white/80 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                    <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto bg-white py-1 text-base border-2 border-black focus:outline-none sm:text-sm">
                       {isLoading ? (
                         <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
                           Loading chains...
@@ -165,32 +229,31 @@ export default function Home() {
                             key={chain.name}
                             value={chain.name}
                             className={({ active }) =>
-                              `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
-                                active ? 'bg-green-500 text-white' : 'text-gray-900'
-                              }`
+                              `relative cursor-pointer select-none py-2 pl-10 pr-4 ${active ? 'bg-green-500 text-white' : 'text-gray-900'}`
                             }
                           >
                             {({ selected, active }) => (
                               <>
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                                  <Image
+                                  <img
                                     src={chain.icon}
                                     alt={chain.name}
                                     width={20}
                                     height={20}
                                     className="rounded-full"
+                                    onError={(e) => {
+                                      e.currentTarget.src = generateDefaultIcon(chain.name);
+                                    }}
                                   />
                                 </div>
                                 <span
                                   className={`block truncate pl-7 ${selected ? 'font-semibold' : 'font-normal'}`}
                                 >
-                                  {chain.name === 'eth' ? 'ethereum' : chain.name}
+                                  {chainNameMapping[chain.name] || chain.name}
                                 </span>
                                 {selected ? (
                                   <span
-                                    className={`absolute inset-y-0 right-0 flex items-center pr-3 ${
-                                      active ? 'text-white' : 'text-green-500'
-                                    }`}
+                                    className={`absolute inset-y-0 right-0 flex items-center pr-3 ${active ? 'text-white' : 'text-green-500'}`}
                                   >
                                     ✓
                                   </span>
@@ -206,73 +269,107 @@ export default function Home() {
               </Combobox>
             </label>
             <label className="block w-full">
-              <span className="text-white/80 font-medium">Transaction Hash</span>
-              <input
-                className="mt-2 block w-full rounded-lg border-none bg-white/30 text-white/90 shadow-sm backdrop-blur px-4 py-3 focus:ring-2 focus:ring-green-400 placeholder:text-white/50"
-                type="text"
-                value={txHash}
-                onChange={e => setTxHash(e.target.value)}
-                placeholder="0x..."
-              />
+              <span className="text-gray-900 font-bold text-lg">Transaction hash:</span>
+              <div className="mt-2 relative">
+                <input
+                  className="block w-full border-2 border-black bg-white text-gray-900 shadow-none pl-4 pr-20 py-3 focus:ring-2 focus:ring-green-400 placeholder:text-gray-400 rounded-none"
+                  type="text"
+                  value={txHash}
+                  onChange={e => setTxHash(e.target.value)}
+                  placeholder="0x..."
+                />
+                <button
+                  onClick={async () => {
+                    try {
+                      const text = await navigator.clipboard.readText();
+                      setTxHash(text);
+                    } catch (err) {
+                      console.error('Failed to read clipboard:', err);
+                    }
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs bg-teal-400 hover:bg-teal-300 text-gray-900 border-2 border-black transition-colors cursor-pointer font-semibold active:scale-95 rounded-none shadow-none"
+                >
+                  PASTE
+                </button>
+              </div>
             </label>
             <button
-              className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transition-all duration-150 cursor-pointer"
+              className="bg-yellow-400 hover:bg-yellow-300 text-gray-900 font-bold py-3 px-8 border-2 border-black text-lg transition-all duration-150 cursor-pointer active:scale-95 rounded-none shadow-none"
               onClick={handleGenerate}
             >
-              Generate Preview
+              Generate 🪄
             </button>
           </div>
 
           {/* Preview Section */}
-          {ogUrl && typeof window !== 'undefined' && (
+          {ogUrl && (
             <div className="w-full lg:w-1/2 flex flex-col gap-4">
-              <img
-                src={window.location.origin + ogUrl}
-                alt="OG Preview"
-                className="w-full rounded-xl border border-white/30 shadow-lg"
-                width={1200}
-                height={675}
-              />
-              <div className="flex flex-col gap-4 w-full">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={window.location.origin + ogUrl.replace('/og-image', '')}
-                    readOnly
-                    className="flex-1 p-2 rounded border border-gray-300 bg-gray-50 text-sm"
+              <div className="relative w-full aspect-video">
+                <div className="w-full h-full bg-black/10 animate-pulse" />
+                {typeof window !== 'undefined' && (
+                  <img
+                    src={window.location.origin + ogUrl}
+                    alt="OG Preview"
+                    className="absolute inset-0 w-full h-full border-2 border-black object-cover"
+                    width={1200}
+                    height={675}
+                    onLoad={() => setIsImageLoaded(true)}
                   />
+                )}
+              </div>
+              {!isImageLoaded && (
+                <div className="flex flex-col gap-4 w-full">
+                  <div className="h-10 bg-black/10 animate-pulse" />
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 h-px bg-white/15"></div>
+                    <span className="text-gray-900">or</span>
+                    <div className="flex-1 h-px bg-white/15"></div>
+                  </div>
+                  <div className="h-10 bg-black/10 animate-pulse" />
+                </div>
+              )}
+              {isImageLoaded && (
+                <div className="flex flex-col gap-4 w-full">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={window.location.origin + ogUrl.replace('/og-image', '')}
+                      readOnly
+                      className="flex-1 p-2 border-2 border-black bg-white text-black text-sm"
+                    />
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.origin + ogUrl.replace('/og-image', ''));
+                      }}
+                      className="bg-purple-400 hover:bg-purple-300 text-gray-900 font-bold py-1.5 px-4 border-2 border-black cursor-pointer transition-all active:scale-95 rounded-none shadow-none"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 h-px bg-white/15"></div>
+                    <span className="text-gray-900">or</span>
+                    <div className="flex-1 h-px bg-white/15"></div>
+                  </div>
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(window.location.origin + ogUrl.replace('/og-image', ''));
-                    }}
-                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded cursor-pointer"
+                    className="bg-blue-400 hover:bg-blue-300 text-gray-900 font-bold py-2 px-4 border-2 border-black cursor-pointer transition-all active:scale-95 rounded-none shadow-none"
+                    onClick={handleShare}
                   >
-                    Copy
+                    Share on X
                   </button>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 h-px bg-white/15"></div>
-                  <span className="text-white">or</span>
-                  <div className="flex-1 h-px bg-white/15"></div>
-                </div>
-                <button
-                  className="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded cursor-pointer"
-                  onClick={handleShare}
-                >
-                  Share on X
-                </button>
-              </div>
+              )}
             </div>
           )}
         </div>
       </main>
-      <footer className="mt-8 text-white/60 text-sm">
+      <footer className="mt-8 text-black text-sm z-10">
         Built by{' '}
         <a
           href="https://github.com/mmednik-noves/"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-white hover:text-green-400 transition-colors"
+          className="text-gray-900 hover:text-green-500 transition-colors font-semibold"
         >
           @mmednik
         </a>{' '}
@@ -281,7 +378,7 @@ export default function Home() {
           href="https://docs.noves.fi/reference/api-overview"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-white hover:text-green-400 transition-colors"
+          className="text-gray-900 hover:text-green-500 transition-colors font-semibold"
         >
           Noves Translate API
         </a>

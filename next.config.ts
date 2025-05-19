@@ -25,6 +25,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'txshare.vercel.app',
       },
+      {
+        protocol: 'https',
+        hostname: 'icons.llamao.fi',
+      },
     ],
   },
   // Configure headers for OG image generation
