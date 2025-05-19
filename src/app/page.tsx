@@ -3,27 +3,75 @@
 import Image from "next/image";
 import { useState, useEffect } from 'react';
 import { Combobox } from '@headlessui/react';
+import { getChainIconUrl, generateDefaultIcon } from './utils/chainIcons';
+
+// Add search and chevron icons using inline SVGs
+const SearchIcon = () => (
+  <svg className="w-5 h-5 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>
+);
+
+const ChevronIcon = ({ open }: { open: boolean }) => (
+  <svg 
+    className={`w-5 h-5 text-white/50 transition-transform ${open ? 'transform rotate-180' : ''}`} 
+    fill="none" 
+    stroke="currentColor" 
+    viewBox="0 0 24 24"
+  >
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+  </svg>
+);
 
 export default function Home() {
   const [chainId, setChainId] = useState('');
   const [txHash, setTxHash] = useState('');
   const [ogUrl, setOgUrl] = useState('');
-  const [chains, setChains] = useState<{ name: string; ecosystem: string }[]>([]);
+  const [chains, setChains] = useState<{ name: string; ecosystem: string; icon: string }[]>([]);
   const [query, setQuery] = useState('');
-
+  const [isLoading, setIsLoading] = useState(true);
+  
   useEffect(() => {
-    const fetchChains = async () => {
+    const fetchChainsAndIcons = async () => {
       try {
+        setIsLoading(true);
         const response = await fetch('/api/chains');
         const result = await response.json();
-        setChains(result);
+        
+        // Fetch icons for all chains in parallel
+        const chainsWithIcons = await Promise.all(
+          result.map(async (chain: { name: string; ecosystem: string }) => {
+            try {
+              const url = getChainIconUrl(chain.name);
+              const res = await fetch(url, { method: 'HEAD' });
+              return {
+                ...chain,
+                icon: res.ok ? url : generateDefaultIcon(chain.name)
+              };
+            } catch {
+              return {
+                ...chain,
+                icon: generateDefaultIcon(chain.name)
+              };
+            }
+          })
+        );
+        
+        setChains(chainsWithIcons);
       } catch {
-        setChains([
-          { name: 'ethereum', ecosystem: 'evm' },
-        ]);
+        // Fallback with default chain and preloaded icon
+        const ethereum = {
+          name: 'ethereum',
+          ecosystem: 'evm',
+          icon: generateDefaultIcon('ethereum')
+        };
+        setChains([ethereum]);
+      } finally {
+        setIsLoading(false);
       }
     };
-    fetchChains();
+
+    fetchChainsAndIcons();
   }, []);
 
   const handleGenerate = () => {
@@ -68,54 +116,93 @@ export default function Home() {
               <Image src="/logo.png" alt="Logo" width={48} height={48} className="rounded-xl shadow-lg" />
             </div>
             <label className="block w-full">
-              <span className="text-white/80 font-medium">Select Chain</span>
+              <span className="text-white/80 font-medium">Chain:</span>
               <Combobox value={chainId} onChange={val => setChainId(val === 'eth' ? 'ethereum' : val ?? '')}>
-                <div className="relative mt-2">
-                  <Combobox.Input
-                    className="block w-full rounded-lg border-none bg-white/30 text-white/90 shadow-sm backdrop-blur px-4 py-3 focus:ring-2 focus:ring-green-400 placeholder:text-white/50"
-                    displayValue={(val: string) => val === 'eth' ? 'ethereum' : val}
-                    onChange={e => setQuery(e.target.value)}
-                    placeholder="Type or select chain..."
-                  />
-                  <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white/80 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
-                    {filteredChains.length === 0 && query !== '' ? (
-                      <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
-                        No chains found.
+                {({ open }) => (
+                  <div className="relative mt-2">
+                    <div className="relative w-full">
+                      <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
+                        <SearchIcon />
                       </div>
-                    ) : (
-                      filteredChains.map(chain => (
-                        <Combobox.Option
-                          key={chain.name}
-                          value={chain.name}
-                          className={({ active }) =>
-                            `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
-                              active ? 'bg-green-500 text-white' : 'text-gray-900'
-                            }`
-                          }
-                        >
-                          {({ selected, active }) => (
-                            <>
-                              <span
-                                className={`block truncate ${selected ? 'font-semibold' : 'font-normal'}`}
-                              >
-                                {chain.name === 'eth' ? 'ethereum' : chain.name}
-                              </span>
-                              {selected ? (
+                      {chainId && (
+                        <div className="absolute inset-y-0 left-0 pl-8 flex items-center pointer-events-none z-10">
+                          <div className="w-5 h-5 rounded-full overflow-hidden">
+                            {chains.find(c => c.name === chainId)?.icon && (
+                              <Image
+                                src={chains.find(c => c.name === chainId)!.icon}
+                                alt={chainId}
+                                width={20}
+                                height={20}
+                                className="rounded-full"
+                              />
+                            )}
+                          </div>
+                          <span className="ml-2 text-white/90">{chainId === 'eth' ? 'ethereum' : chainId}</span>
+                        </div>
+                      )}
+                      <Combobox.Input
+                        className={`block w-full rounded-lg border-none bg-white/30 text-white/90 shadow-sm backdrop-blur ${chainId ? 'pl-32' : 'pl-8'} pr-10 py-3 focus:ring-2 focus:ring-green-400 placeholder:text-white/50`}
+                        displayValue={() => ''}
+                        onChange={e => setQuery(e.target.value)}
+                        placeholder={chainId ? '' : 'Search or select chain...'}
+                      />
+                      <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+                        <ChevronIcon open={open} />
+                      </Combobox.Button>
+                    </div>
+                    <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white/80 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
+                      {isLoading ? (
+                        <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
+                          Loading chains...
+                        </div>
+                      ) : filteredChains.length === 0 && query !== '' ? (
+                        <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
+                          No chains found.
+                        </div>
+                      ) : (
+                        filteredChains.map(chain => (
+                          <Combobox.Option
+                            key={chain.name}
+                            value={chain.name}
+                            className={({ active }) =>
+                              `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
+                                active ? 'bg-green-500 text-white' : 'text-gray-900'
+                              }`
+                            }
+                          >
+                            {({ selected, active }) => (
+                              <>
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
+                                  <Image
+                                    src={chain.icon}
+                                    alt={chain.name}
+                                    width={20}
+                                    height={20}
+                                    className="rounded-full"
+                                  />
+                                </div>
                                 <span
-                                  className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                                    active ? 'text-white' : 'text-green-500'
-                                  }`}
+                                  className={`block truncate pl-7 ${selected ? 'font-semibold' : 'font-normal'}`}
                                 >
-                                  ✓
+                                  {chain.name === 'eth' ? 'ethereum' : chain.name}
                                 </span>
-                              ) : null}
-                            </>
-                          )}
-                        </Combobox.Option>
-                      ))
-                    )}
-                  </Combobox.Options>
-                </div>
+                                {selected ? (
+                                  <span
+                                    className={`absolute inset-y-0 right-0 flex items-center pr-3 ${
+                                      active ? 'text-white' : 'text-green-500'
+                                    }`}
+                                  >
+                                    ✓
+                                  </span>
+                                ) : null}
+                              </>
+                            )}
+                          </Combobox.Option>
+                        ))
+                      )}
+                    </Combobox.Options>
+                  </div>
+                )}
               </Combobox>
             </label>
             <label className="block w-full">

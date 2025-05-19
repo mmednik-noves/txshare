@@ -3,6 +3,7 @@ import * as React from 'react';
 import { ImageResponse } from '@vercel/og';
 import { NextRequest } from 'next/server';
 import { Translate, shortenAddress } from '@noves/noves-sdk';
+import { checkChainIconExists } from '../../../utils/chainIcons';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -128,17 +129,7 @@ export async function GET(
   const encodedBgImage = `data:image/png;base64,${bgImageBase64}`;
 
   // Fetch chain icon
-  let chainIcon = null;
-  try {
-    const chainIconUrl = `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/${chain.toLowerCase()}/info/logo.png`;
-    const chainIconResponse = await fetch(chainIconUrl);
-    
-    if (chainIconResponse.ok) {
-      chainIcon = chainIconUrl;
-    }
-  } catch (error) {
-    console.error('Failed to fetch chain icon:', error);
-  }
+  const chainIcon = await checkChainIconExists(chain);
 
   // Capitalize first letter of chain name
   const capitalizedChain = chain.charAt(0).toUpperCase() + chain.slice(1).toLowerCase();
@@ -173,12 +164,13 @@ export async function GET(
             },
           },
           [
-            chainIcon && React.createElement('img', {
+            React.createElement('img', {
               src: chainIcon,
               width: 100,
               height: 100,
               style: { 
                 objectFit: 'contain',
+                borderRadius: '50%',
               },
             }),
             React.createElement('p', { 
